@@ -23,7 +23,7 @@ const Profile = () => {
 
             if (data.success) {
                 toast.success(data.message);
-                await loadUserProfileData();
+                // await loadUserProfileData();
                 setIsEdit(false);
                 setImage(false);
             } else {
