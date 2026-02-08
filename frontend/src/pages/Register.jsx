@@ -20,7 +20,6 @@ const Register = () => {
         phone: ''
     });
 
-    const [errors, setErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -28,10 +27,6 @@ const Register = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: null }));
-        }
     };
 
     const handleSubmit = async (e) => {
@@ -59,50 +54,57 @@ const Register = () => {
                 toast.success('Registration successful! Please log in.');
 
                 navigate('/login', {
-                    state: {
-                        email,
-                        password
-                    }
-                });
-
-                setFormData({
-                    name: '',
-                    email: '',
-                    password: '',
-                    confirmPassword: '',
-                    phone: ''
+                    state: { email, password }
                 });
             }
         } catch (error) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
-                toast.error('Please fix the errors in the form');
-            } else if (error.response?.data?.message) {
-                toast.error(error.response.data.message);
-            } else {
-                toast.error('An unexpected error occurred. Please try again.');
-            }
+            toast.error(
+                error.response?.data?.message ||
+                'An unexpected error occurred'
+            );
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-primary rounded-2xl p-4">
-            <div className="max-w-md w-full p-8 bg-gradient-to-r from-blue-100 via-indigo-100 to-blue-200 bg-opacity-80 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/70">
-                <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
+        <div
+            className="
+                 min-h-[100dvh]
+                bg-white md:bg-gray-100
+                flex
+                items-start md:items-center
+                justify-center
+                pt-6 md:pt-0
+                overflow-y-auto"
+        >
+            <div
+                className="
+                    w-full
+                    px-6 py-10
+                    md:max-w-md
+                    md:bg-white
+                    md:rounded-xl
+                    md:shadow-lg
+                "
+            >
+                {/* Header */}
+                <h1 className="text-2xl font-semibold text-gray-900">
                     Create Account
-                </h2>
+                </h1>
+                <p className="text-sm text-gray-500 mt-1">
+                    Sign up to get started
+                </p>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="mt-8 space-y-5">
                     {/* Name */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label className="text-sm font-medium text-gray-700">
                             Name
                         </label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
-                                <FaUser size={18} />
+                        <div className="relative mt-2">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <FaUser size={16} />
                             </span>
                             <input
                                 type="text"
@@ -110,20 +112,28 @@ const Register = () => {
                                 value={formData.name}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="Enter your name"
+                                placeholder="Enter First and Last Name"
+                                className="
+                                    w-full
+                                    pl-10 pr-4 py-3
+                                    rounded-md
+                                    bg-gray-100
+                                    border border-transparent
+                                    focus:bg-white focus:border-blue-600
+                                    outline-none
+                                "
                             />
                         </div>
                     </div>
 
                     {/* Email */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Email
+                        <label className="text-sm font-medium text-gray-700">
+                            Email Address
                         </label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
-                                <MdEmail size={20} />
+                        <div className="relative mt-2">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <MdEmail size={18} />
                             </span>
                             <input
                                 type="email"
@@ -131,53 +141,77 @@ const Register = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="Enter your email"
+                                placeholder="Enter Email"
+                                className="
+                                    w-full
+                                    pl-10 pr-4 py-3
+                                    rounded-md
+                                    bg-gray-100
+                                    border border-transparent
+                                    focus:bg-white focus:border-blue-600
+                                    outline-none
+                                "
                             />
                         </div>
                     </div>
 
-                    {/* Phone (Optional) */}
+                    {/* Phone */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Phone (Optional)
+                        <label className="text-sm font-medium text-gray-700">
+                            Phone
                         </label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
-                                <FaPhone size={18} />
+                        <div className="relative mt-2">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <FaPhone size={16} />
                             </span>
                             <input
                                 type="tel"
                                 name="phone"
                                 value={formData.phone}
                                 onChange={handleChange}
-                                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="Enter your phone number"
+                                placeholder="Enter Phone Number"
+                                className="
+                                    w-full
+                                    pl-10 pr-4 py-3
+                                    rounded-md
+                                    bg-gray-100
+                                    border border-transparent
+                                    focus:bg-white focus:border-blue-600
+                                    outline-none
+                                "
                             />
                         </div>
                     </div>
 
                     {/* Password */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label className="text-sm font-medium text-gray-700">
                             Password
                         </label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
-                                <RiLockPasswordLine size={20} />
+                        <div className="relative mt-2">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <RiLockPasswordLine size={16} />
                             </span>
                             <input
-                                type={showPassword ? "text" : "password"}
+                                type={showPassword ? 'text' : 'password'}
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="Enter password"
+                                placeholder="Enter Password"
+                                className="
+                                    w-full
+                                    pl-10 pr-10 py-3
+                                    rounded-md
+                                    bg-gray-100
+                                    border border-transparent
+                                    focus:bg-white focus:border-blue-600
+                                    outline-none
+                                "
                             />
                             <button
                                 type="button"
-                                onClick={() => setShowPassword(!showPassword)}
+                                onClick={() => setShowPassword(p => !p)}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                             >
                                 {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
@@ -187,25 +221,33 @@ const Register = () => {
 
                     {/* Confirm Password */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label className="text-sm font-medium text-gray-700">
                             Confirm Password
                         </label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
-                                <RiLockPasswordLine size={20} />
+                        <div className="relative mt-2">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <RiLockPasswordLine size={16} />
                             </span>
                             <input
-                                type={showConfirmPassword ? "text" : "password"}
+                                type={showConfirmPassword ? 'text' : 'password'}
                                 name="confirmPassword"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="Confirm password"
+                                placeholder="Confirm Password"
+                                className="
+                                    w-full
+                                    pl-10 pr-10 py-3
+                                    rounded-md
+                                    bg-gray-100
+                                    border border-transparent
+                                    focus:bg-white focus:border-blue-600
+                                    outline-none
+                                "
                             />
                             <button
                                 type="button"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                onClick={() => setShowConfirmPassword(p => !p)}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                             >
                                 {showConfirmPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
@@ -213,21 +255,33 @@ const Register = () => {
                         </div>
                     </div>
 
+                    {/* Submit */}
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full mt-6 bg-gradient-to-r from-blue-700 to-indigo-600 text-white py-3 rounded-lg font-semibold disabled:opacity-60"
+                        className="
+                            w-full
+                            bg-blue-600
+                            text-white
+                            py-3
+                            rounded-md
+                            font-semibold
+                            hover:bg-blue-700
+                            transition
+                            disabled:opacity-60
+                        "
                     >
-                        {loading ? "Registering..." : "Register"}
+                        {loading ? 'Creating account...' : 'Create Account'}
                     </button>
                 </form>
 
-                <p className="mt-6 text-center text-gray-600">
+                {/* Footer */}
+                <div className="mt-6 text-center text-sm text-gray-600">
                     Already have an account?{' '}
                     <Link to="/login" className="text-blue-600 font-medium">
-                        Login here
+                        Login
                     </Link>
-                </p>
+                </div>
             </div>
         </div>
     );
