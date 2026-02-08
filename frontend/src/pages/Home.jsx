@@ -1,7 +1,7 @@
 import React from 'react'
 import Hero from '../components/Hero'
 import Category from '../components/Category'
-import ShowItems from '../components/showItems'
+import ShowItems from '../components/ShowItems'
 import { useContext } from 'react'
 import { AppContext } from "../context/AppContext";
 
