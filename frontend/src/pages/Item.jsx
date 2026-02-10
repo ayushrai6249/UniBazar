@@ -94,14 +94,21 @@ const Item = () => {
   const isOwner = itemInfo.owner?._id === userData?._id;
 
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-16 min-h-screen">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 bg-white p-6 rounded-2xl shadow-lg relative">
-
-        {/* Wishlist Icon */}
+    <div className="py-4 px-0 sm:px-6 lg:px-16 min-h-screen">
+      <div
+        className="
+          grid grid-cols-1 lg:grid-cols-3 gap-6
+          bg-white
+          p-3 sm:p-6
+          rounded-none lg:rounded-2xl
+          shadow-none lg:shadow-lg
+          relative
+        "
+      >
         {token && !isOwner && (
           <button
             onClick={toggleWishlist}
-            className="absolute top-4 right-4 transition hover:scale-110"
+            className="absolute top-4 right-4 z-10 transition hover:scale-110"
           >
             <Heart
               size={28}
@@ -112,17 +119,18 @@ const Item = () => {
           </button>
         )}
 
-        {/* Image */}
         <div className="flex justify-center">
           <img
             src={itemInfo.image}
             alt={itemInfo.name}
-            className={`rounded-xl w-full max-w-sm object-cover aspect-square ${!itemInfo.available ? 'grayscale' : ''
-              }`}
+            className={`
+            w-full object-cover aspect-square
+            rounded-md sm:rounded-xl
+          ${!itemInfo.available ? 'grayscale' : ''}
+          `}
           />
         </div>
 
-        {/* Details */}
         <div className="flex flex-col gap-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-3">
@@ -148,13 +156,11 @@ const Item = () => {
             </p>
           </div>
 
-          {/* Description */}
           <div>
             <p className="font-semibold text-sm">About</p>
             <p className="text-sm text-gray-600">{itemInfo.description}</p>
           </div>
 
-          {/* OWNER INFO */}
           {!isOwner && itemInfo?.owner && (
             <div>
               <p className="font-semibold text-sm">Owner</p>
@@ -164,24 +170,19 @@ const Item = () => {
                 onClick={() => navigate(`/profile/${itemInfo.owner._id}`)}
               >
                 <img
-                  src={itemInfo.owner.image || "/default-avatar.png"}
+                  src={itemInfo.owner.image || '/default-avatar.png'}
                   alt={itemInfo.owner.name}
                   className="w-10 h-10 rounded-full border object-cover"
                 />
-
-                <div>
-                  <p className="text-sm font-semibold">
-                    {itemInfo.owner.name}
-                  </p>
-                </div>
+                <p className="text-sm font-semibold">
+                  {itemInfo.owner.name}
+                </p>
               </div>
             </div>
           )}
-          {/* Price + Owner Action */}
+
           <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <p className="text-lg font-bold">
-              ₹{itemInfo.price}
-            </p>
+            <p className="text-lg font-bold">₹{itemInfo.price}</p>
 
             {isOwner && (
               <button
@@ -196,7 +197,6 @@ const Item = () => {
             )}
           </div>
 
-          {/* Chat / Actions */}
           {!isOwner ? (
             itemInfo.available && (
               <button
