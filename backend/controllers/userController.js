@@ -48,26 +48,43 @@ export const registerUser = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
-// Api to login user
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
+
         const user = await User.findOne({ email });
         if (!user) {
-            return res.json({ success: false, message: "User doesn't exist" });
+            return res.status(400).json({
+                success: false,
+                errors: {
+                    email: ["User doesn't exist"],
+                },
+            });
         }
         const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch) {
-            const token = generateToken(user._id, user.role);
-            return res.json({ success: true, token, message: "Login successful" });
+        if (!isMatch) {
+            return res.status(400).json({
+                success: false,
+                errors: {
+                    password: ["Wrong password"],
+                },
+            });
         }
-        else {
-            return res.json({ success: false, message: "Wrong password" });
-        }
+        const token = generateToken(user._id, user.role);
+        return res.status(200).json({
+            success: true,
+            token,
+            message: "Login successful",
+        });
     } catch (error) {
-        res.json({ success: false, message: error.message });
+        console.error("LOGIN_ERROR:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
     }
 };
+
 
 
 const generateToken = (id, role) => {
