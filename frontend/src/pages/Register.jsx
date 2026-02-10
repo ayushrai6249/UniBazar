@@ -21,17 +21,14 @@ const Register = () => {
     });
 
     const [errors, setErrors] = useState({});
-
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-
         setFormData(prev => ({ ...prev, [name]: value }));
-
-        setErrors(prev => ({ ...prev, [name]: [] }));
+        setErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleSubmit = async (e) => {
@@ -39,11 +36,8 @@ const Register = () => {
 
         const { name, email, password, confirmPassword, phone } = formData;
 
-        // Frontend confirm password check
         if (password !== confirmPassword) {
-            setErrors({
-                confirmPassword: ['Passwords do not match']
-            });
+            setErrors({ confirmPassword: ['Passwords do not match'] });
             return;
         }
 
@@ -71,7 +65,6 @@ const Register = () => {
                 return;
             }
 
-            // Other backend errors
             if (data?.message) {
                 toast.error(data.message);
                 return;
@@ -84,8 +77,27 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-[100dvh] bg-white md:bg-gray-100 flex items-start md:items-center justify-center pt-6 md:pt-0 overflow-y-auto">
-            <div className="w-full px-6 py-10 md:max-w-md md:bg-white md:rounded-xl md:shadow-lg">
+        <div
+            className="
+                min-h-screen
+                bg-white md:bg-gray-100
+                flex
+                items-start md:items-center
+                justify-center
+                pt-6 md:pt-0
+            "
+        >
+            <div
+                className="
+                    w-full
+                    px-4 py-6
+                    md:px-8 md:py-8
+                    md:max-w-md
+                    bg-white
+                    md:rounded-xl
+                    md:shadow-lg
+                "
+            >
                 <h1 className="text-2xl font-semibold text-gray-900">
                     Create Account
                 </h1>
@@ -105,15 +117,26 @@ const Register = () => {
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
-                                className={`w-full pl-10 pr-4 py-3 rounded-md bg-gray-100 outline-none
-                                    ${errors.name ? 'border border-red-500' : 'border border-transparent focus:border-blue-600'}
-                                `}
                                 placeholder="Enter your name"
+                                className={`
+                                    w-full
+                                    pl-10 pr-4 py-2.5 md:py-3
+                                    rounded-md
+                                    bg-gray-100
+                                    outline-none
+                                    border
+                                    ${errors.name
+                                        ? 'border-red-500'
+                                        : 'border-transparent focus:border-blue-600'}
+                                `}
                             />
                         </div>
-                        {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name[0]}</p>}
+                        {errors.name && (
+                            <p className="text-sm text-red-600 mt-1">{errors.name[0]}</p>
+                        )}
                     </div>
 
+                    {/* Email */}
                     <div>
                         <label className="text-sm font-medium text-gray-700">Email</label>
                         <div className="relative mt-2">
@@ -123,15 +146,26 @@ const Register = () => {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className={`w-full pl-10 pr-4 py-3 rounded-md bg-gray-100 outline-none
-                                    ${errors.email ? 'border border-red-500' : 'border border-transparent focus:border-blue-600'}
-                                `}
                                 placeholder="Enter email"
+                                className={`
+                                    w-full
+                                    pl-10 pr-4 py-2.5 md:py-3
+                                    rounded-md
+                                    bg-gray-100
+                                    outline-none
+                                    border
+                                    ${errors.email
+                                        ? 'border-red-500'
+                                        : 'border-transparent focus:border-blue-600'}
+                                `}
                             />
                         </div>
-                        {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email[0]}</p>}
+                        {errors.email && (
+                            <p className="text-sm text-red-600 mt-1">{errors.email[0]}</p>
+                        )}
                     </div>
 
+                    {/* Phone */}
                     <div>
                         <label className="text-sm font-medium text-gray-700">Phone</label>
                         <div className="relative mt-2">
@@ -141,13 +175,23 @@ const Register = () => {
                                 name="phone"
                                 value={formData.phone}
                                 onChange={handleChange}
-                                className={`w-full pl-10 pr-4 py-3 rounded-md bg-gray-100 outline-none
-                                    ${errors.phone ? 'border border-red-500' : 'border border-transparent focus:border-blue-600'}
-                                `}
                                 placeholder="Phone number"
+                                className={`
+                                    w-full
+                                    pl-10 pr-4 py-2.5 md:py-3
+                                    rounded-md
+                                    bg-gray-100
+                                    outline-none
+                                    border
+                                    ${errors.phone
+                                        ? 'border-red-500'
+                                        : 'border-transparent focus:border-blue-600'}
+                                `}
                             />
                         </div>
-                        {errors.phone && <p className="text-sm text-red-600 mt-1">{errors.phone[0]}</p>}
+                        {errors.phone && (
+                            <p className="text-sm text-red-600 mt-1">{errors.phone[0]}</p>
+                        )}
                     </div>
 
                     {/* Password */}
@@ -160,10 +204,18 @@ const Register = () => {
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                className={`w-full pl-10 pr-10 py-3 rounded-md bg-gray-100 outline-none
-                                    ${errors.password ? 'border border-red-500' : 'border border-transparent focus:border-blue-600'}
-                                `}
                                 placeholder="Enter password"
+                                className={`
+                                    w-full
+                                    pl-10 pr-10 py-2.5 md:py-3
+                                    rounded-md
+                                    bg-gray-100
+                                    outline-none
+                                    border
+                                    ${errors.password
+                                        ? 'border-red-500'
+                                        : 'border-transparent focus:border-blue-600'}
+                                `}
                             />
                             <button
                                 type="button"
@@ -185,7 +237,9 @@ const Register = () => {
 
                     {/* Confirm Password */}
                     <div>
-                        <label className="text-sm font-medium text-gray-700">Confirm Password</label>
+                        <label className="text-sm font-medium text-gray-700">
+                            Confirm Password
+                        </label>
                         <div className="relative mt-2">
                             <RiLockPasswordLine className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
@@ -193,10 +247,18 @@ const Register = () => {
                                 name="confirmPassword"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
-                                className={`w-full pl-10 pr-10 py-3 rounded-md bg-gray-100 outline-none
-                                    ${errors.confirmPassword ? 'border border-red-500' : 'border border-transparent focus:border-blue-600'}
-                                `}
                                 placeholder="Confirm password"
+                                className={`
+                                    w-full
+                                    pl-10 pr-10 py-2.5 md:py-3
+                                    rounded-md
+                                    bg-gray-100
+                                    outline-none
+                                    border
+                                    ${errors.confirmPassword
+                                        ? 'border-red-500'
+                                        : 'border-transparent focus:border-blue-600'}
+                                `}
                             />
                             <button
                                 type="button"
@@ -207,14 +269,26 @@ const Register = () => {
                             </button>
                         </div>
                         {errors.confirmPassword && (
-                            <p className="text-sm text-red-600 mt-1">{errors.confirmPassword[0]}</p>
+                            <p className="text-sm text-red-600 mt-1">
+                                {errors.confirmPassword[0]}
+                            </p>
                         )}
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition disabled:opacity-60"
+                        className="
+                            w-full
+                            bg-blue-600
+                            text-white
+                            py-3
+                            rounded-md
+                            font-semibold
+                            hover:bg-blue-700
+                            transition
+                            disabled:opacity-60
+                        "
                     >
                         {loading ? 'Creating account...' : 'Create Account'}
                     </button>
