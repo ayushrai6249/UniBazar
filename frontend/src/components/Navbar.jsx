@@ -99,7 +99,7 @@ const Navbar = () => {
                         <NavLink onClick={() => setShowMenu(false)} to='/about'><p className='px-4 py-2 rounded inline-block'>ABOUT</p></NavLink>
                         <NavLink onClick={() => setShowMenu(false)} to='/contact'><p className='px-4 py-2 rounded inline-block'>CONTACT</p></NavLink>
                         {userData.role === "admin" && <NavLink onClick={() => setShowMenu(false)} to='/admin'><p className='px-4 py-2 rounded inline-block'>ADMIN</p></NavLink>}
-                        {userData.role === "manager" && <NavLink onClick={() => setShowMenu(false)} to='/manager'><p className='px-4 py-2 rounded inline-block'>ADMIN</p></NavLink>}
+                        {userData.role === "manager" && <NavLink onClick={() => setShowMenu(false)} to='/manager'><p className='px-4 py-2 rounded inline-block'>MANAGER</p></NavLink>}
                         {(!token) && <NavLink onClick={() => setShowMenu(false)} to='/login'><p className='px-4 py-2 rounded inline-block'>LOGIN</p></NavLink>}
                     </ul>
                 </div>
