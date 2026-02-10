@@ -15,7 +15,9 @@ connectDB();
 
 app.use(express.json());
 app.use(cors());
-
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
 app.use('/api/users', userRoutes);
 app.use('/api/items', itemRouter);
 app.use('/api/admin', adminRouter);
