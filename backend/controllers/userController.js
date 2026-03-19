@@ -106,23 +106,24 @@ const generateToken = (id, role) => {
 
 export const addItem = async (req, res) => {
     try {
+        console.log("BODY:", req.body);
+        console.log("FILE:", req.file);
+        console.log("USER:", req.userId);
         const userId = req.userId;
         const { name, category, price, old, description } = req.body;
         const imageFile = req.file;
-
-        if (!name || !category || !price || !old || !imageFile || !description) {
-            return res.json({ success: false, message: "Missing details" });
+        if (!name || !category || !price || !old || !description || !imageFile) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing details"
+            });
         }
-
-        const cloudinaryResult = await cloudinary.uploader.upload(imageFile.path, {
-            folder: "unibazar_items",
-        });
-
+        const imageUrl = imageFile.path;
         const sightResponse = await axios.get(
             "https://api.sightengine.com/1.0/check.json",
             {
                 params: {
-                    url: cloudinaryResult.secure_url,
+                    url: imageUrl,
                     models: "nudity-2.1,gore-2.0,weapon,recreational_drug,medical,alcohol,tobacco",
                     api_user: process.env.SIGHTENGINE_API_USER,
                     api_secret: process.env.SIGHTENGINE_API_SECRET,
@@ -130,62 +131,54 @@ export const addItem = async (req, res) => {
             }
         );
         const data = sightResponse.data;
-        const nudity = data.nudity || {};
-        const gore = data.gore || {};
-        const weapon = data.weapon || {};
-        const drug = data.recreational_drug || {};
-        const medical = data.medical || {};
-        const alcohol = data.alcohol || {};
-        const tobacco = data.tobacco || {};
-        const isNuditySafe = (nudity.none || 0) > 0.85 && (nudity.sexual_activity || 0) < 0.1 && (nudity.sexual_display || 0) < 0.1 && (nudity.erotica || 0) < 0.1;
-        const isGoreSafe = (gore.prob || 0) < 0.3;
-        const isWeaponSafe = (weapon.classes?.firearm || 0) < 0.3 && (weapon.classes?.knife || 0) < 0.3;
-        const isDrugSafe = (drug.prob || 0) < 0.3;
-        const isAlcoholSafe = (alcohol.prob || 0) < 0.3;
-        const isTobaccoSafe = (tobacco.prob || 0) < 0.3;
-        const isSafe = isNuditySafe && isGoreSafe && isWeaponSafe && isDrugSafe && isAlcoholSafe && isTobaccoSafe;
+        const isSafe =
+            (data.nudity?.none || 0) > 0.85 &&
+            (data.gore?.prob || 0) < 0.3 &&
+            (data.weapon?.classes?.firearm || 0) < 0.3 &&
+            (data.recreational_drug?.prob || 0) < 0.3 &&
+            (data.alcohol?.prob || 0) < 0.3 &&
+            (data.tobacco?.prob || 0) < 0.3;
         let reasons = [];
-        if (!isNuditySafe) reasons.push("Inappropriate content");
-        if (!isGoreSafe) reasons.push("Gore/Violence detected");
-        if (!isWeaponSafe) reasons.push("Weapon detected");
-        if (!isDrugSafe) reasons.push("Drugs detected");
-        if (!isAlcoholSafe) reasons.push("Alcohol detected");
-        if (!isTobaccoSafe) reasons.push("Tobacco detected");
-        const itemData = {
+        if (!(data.nudity?.none > 0.85)) reasons.push("Inappropriate content");
+        if ((data.gore?.prob || 0) >= 0.3) reasons.push("Gore detected");
+        if ((data.weapon?.classes?.firearm || 0) >= 0.3) reasons.push("Weapon detected");
+        if ((data.recreational_drug?.prob || 0) >= 0.3) reasons.push("Drugs detected");
+        if ((data.alcohol?.prob || 0) >= 0.3) reasons.push("Alcohol detected");
+        if ((data.tobacco?.prob || 0) >= 0.3) reasons.push("Tobacco detected");
+        const newItem = new Item({
             name,
             category,
             price,
             old,
-            image: cloudinaryResult.secure_url,
+            description,
+            image: imageUrl,
             date: new Date().toISOString(),
             owner: userId,
             aiapproved: isSafe,
-            approved: isSafe,
-            description
-        };
-        const newItem = new Item(itemData);
-        await newItem.save();
-        await User.findByIdAndUpdate(
-            userId,
-            { $push: { Listings: newItem._id } },
-            { new: true }
-        );
-        if (!isSafe) {
-            return res.json({
-                success: true,
-                message: "Item added but pending approval",
-                aiapproved: false,
-                reasons
-            });
-        }
-        res.json({
-            success: true,
-            message: "Item Added and Approved",
-            aiapproved: true
+            approved: isSafe
         });
+
+        await newItem.save();
+
+        await User.findByIdAndUpdate(userId, {
+            $push: { Listings: newItem._id }
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: isSafe
+                ? "Item Added and Approved"
+                : "Item added but pending approval",
+            aiapproved: isSafe,
+            reasons
+        });
+
     } catch (error) {
-        console.error("Error in addItem:", error);
-        res.json({ success: false, message: error.message });
+        console.error("ADD ITEM ERROR:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
 };
 // api to load user data

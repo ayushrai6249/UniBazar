@@ -40,7 +40,11 @@ const AddListing = () => {
       const { data } = await axios.post(
         backendUrl + '/api/users/add-listing',
         formData,
-        { headers: { token } }
+        {
+          headers: {
+            token,
+          },
+        }
       );
 
       if (data.success) {
