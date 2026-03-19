@@ -109,42 +109,60 @@ export const addItem = async (req, res) => {
         console.log("BODY:", req.body);
         console.log("FILE:", req.file);
         console.log("USER:", req.userId);
+
         const userId = req.userId;
         const { name, category, price, old, description } = req.body;
         const imageFile = req.file;
+
         if (!name || !category || !price || !old || !description || !imageFile) {
             return res.status(400).json({
                 success: false,
                 message: "Missing details"
             });
         }
+
         const imageUrl = imageFile.path;
-        const sightResponse = await axios.get(
-            "https://api.sightengine.com/1.0/check.json",
-            {
-                params: {
-                    url: imageUrl,
-                    models: "nudity-2.1,gore-2.0,weapon,recreational_drug,medical,alcohol,tobacco",
-                    api_user: process.env.SIGHTENGINE_API_USER,
-                    api_secret: process.env.SIGHTENGINE_API_SECRET,
-                },
-            }
-        );
-        const data = sightResponse.data;
-        const isSafe =
-            (data.nudity?.none || 0) > 0.85 &&
-            (data.gore?.prob || 0) < 0.3 &&
-            (data.weapon?.classes?.firearm || 0) < 0.3 &&
-            (data.recreational_drug?.prob || 0) < 0.3 &&
-            (data.alcohol?.prob || 0) < 0.3 &&
-            (data.tobacco?.prob || 0) < 0.3;
+        console.log("IMAGE URL:", imageUrl);
+
+        let isSafe = true;
         let reasons = [];
-        if (!(data.nudity?.none > 0.85)) reasons.push("Inappropriate content");
-        if ((data.gore?.prob || 0) >= 0.3) reasons.push("Gore detected");
-        if ((data.weapon?.classes?.firearm || 0) >= 0.3) reasons.push("Weapon detected");
-        if ((data.recreational_drug?.prob || 0) >= 0.3) reasons.push("Drugs detected");
-        if ((data.alcohol?.prob || 0) >= 0.3) reasons.push("Alcohol detected");
-        if ((data.tobacco?.prob || 0) >= 0.3) reasons.push("Tobacco detected");
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            const sightResponse = await axios.get(
+                "https://api.sightengine.com/1.0/check.json",
+                {
+                    params: {
+                        url: imageUrl,
+                        models: "nudity-2.1,gore-2.0,weapon,recreational_drug,medical,alcohol,tobacco",
+                        api_user: process.env.SIGHTENGINE_API_USER,
+                        api_secret: process.env.SIGHTENGINE_API_SECRET,
+                    },
+                }
+            );
+
+            const data = sightResponse.data;
+
+            isSafe =
+                (data.nudity?.none || 0) > 0.85 &&
+                (data.gore?.prob || 0) < 0.3 &&
+                (data.weapon?.classes?.firearm || 0) < 0.3 &&
+                (data.recreational_drug?.prob || 0) < 0.3 &&
+                (data.alcohol?.prob || 0) < 0.3 &&
+                (data.tobacco?.prob || 0) < 0.3;
+
+            if (!(data.nudity?.none > 0.85)) reasons.push("Inappropriate content");
+            if ((data.gore?.prob || 0) >= 0.3) reasons.push("Gore detected");
+            if ((data.weapon?.classes?.firearm || 0) >= 0.3) reasons.push("Weapon detected");
+            if ((data.recreational_drug?.prob || 0) >= 0.3) reasons.push("Drugs detected");
+            if ((data.alcohol?.prob || 0) >= 0.3) reasons.push("Alcohol detected");
+            if ((data.tobacco?.prob || 0) >= 0.3) reasons.push("Tobacco detected");
+
+        } catch (err) {
+            console.log("AI ERROR:", err.response?.data || err.message);
+        }
+
         const newItem = new Item({
             name,
             category,
