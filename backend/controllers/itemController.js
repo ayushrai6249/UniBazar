@@ -101,13 +101,6 @@ const toggleItemUnavailable = async (req, res) => {
 };
 
 
-//    PERSONALIZED ITEMS
-const getSortedTags = (tags) => {
-    const tagArray = Array.from(tags.entries());
-    tagArray.sort((a, b) => b[1] - a[1]);
-    return tagArray.map(item => item[0]);
-};
-
 
 
 export {

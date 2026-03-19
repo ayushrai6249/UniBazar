@@ -9,6 +9,7 @@ const itemSchema = new mongoose.Schema({
     old: { type: String, default: "Not specified" },
     date: { type: Date, default: Date.now },
     approved: { type: Boolean, default: false },
+    aiapproved: { type: Boolean, default: false },
     views: { type: Number, default: 0 },
     owner: {
         type: mongoose.Schema.Types.ObjectId,
@@ -23,7 +24,7 @@ const itemSchema = new mongoose.Schema({
     message: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Message",
-       
+
     }]
 });
 

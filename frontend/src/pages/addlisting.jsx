@@ -44,13 +44,12 @@ const AddListing = () => {
       );
 
       if (data.success) {
-        alert("Your product has been added successfully. It will be visible once approved by our team. You can check its status on the My Listings page. If approval takes time, feel free to contact the admin or users through the Contact page.");
-
+        alert("Product added successfully! If approved by AI, it will be visible shortly. Otherwise, you can contact the admin. Check My Listings for status.");
         toast.success(data.message);
         setForm({ name: '', category: '', price: '', old: '', description: '' });
         setImage(null);
         setPreview(null);
-        // navigate('/items');
+        navigate('/my-listings');
       } else toast.error(data.message);
     } catch (err) {
       toast.error(err.message);

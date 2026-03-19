@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 const AllItemsPage = () => {
   const [items, setItems] = useState([]);
+  const [filter, setFilter] = useState("all");
   const navigate = useNavigate();
 
   const backendUrl =
@@ -46,12 +47,30 @@ const AllItemsPage = () => {
     }
   };
 
+  const filteredItems = items.filter((item) => {
+    if (filter === "aiApproved") return item.aiapproved === true;
+    if (filter === "aiRejected") return item.aiapproved === false;
+    return true; // all
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h2 className="text-2xl font-bold mb-6">All Items</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">All Items</h2>
+
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="border px-3 py-2 rounded-lg text-sm"
+        >
+          <option value="all">All Items</option>
+          <option value="aiApproved">AI Approved</option>
+          <option value="aiRejected">AI Rejected</option>
+        </select>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-        {items.map((item) => (
+        {filteredItems.map((item) => (
           <div
             key={item._id}
             onClick={() => {
@@ -61,14 +80,12 @@ const AllItemsPage = () => {
             className="bg-white border rounded-xl shadow p-4 cursor-pointer
                        hover:shadow-lg hover:scale-[1.02] transition-all"
           >
-            {/* IMAGE */}
             <img
               src={item.image}
               alt={item.name}
               className="h-36 w-full object-cover rounded"
             />
 
-            {/* INFO */}
             <h3 className="font-bold mt-2 truncate">
               {item.name}
             </h3>
@@ -81,16 +98,18 @@ const AllItemsPage = () => {
               ₹{item.price}
             </p>
 
-            {/* STATUS + ACTION */}
             <div className="flex justify-between items-center mt-3">
-              <span
-                className={`text-xs px-2 py-1 rounded ${item.approved
-                  ? "bg-green-100 text-green-700"
-                  : "bg-yellow-100 text-yellow-800"
-                  }`}
-              >
-                {item.approved ? "Approved" : "Pending"}
-              </span>
+              <div className="flex flex-col gap-1">
+                <span
+                  className={`text-xs px-2 py-1 rounded ${item.approved
+                    ? "bg-green-100 text-green-700"
+                    : "bg-yellow-100 text-yellow-800"
+                    }`}
+                >
+                  {item.approved ? "Approved" : "Pending"}
+                </span>
+
+              </div>
 
               <button
                 onClick={(e) => {

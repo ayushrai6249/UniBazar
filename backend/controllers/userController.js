@@ -5,6 +5,9 @@ import Item from '../models/itemModel.js';
 import cloudinary from "../config/cloudinary.js";
 import { z } from 'zod';
 import { RegisterSchema } from '../middleware/validateSchema.js';
+import dotenv from 'dotenv';
+dotenv.config();
+import axios from "axios";
 // Api to register user
 export const registerUser = async (req, res) => {
     try {
@@ -28,6 +31,7 @@ export const registerUser = async (req, res) => {
             password: hashedPassword,
             phone,
         });
+
         const savedUser = await newUser.save();
         const tokenPayload = { id: savedUser._id, role: savedUser.role };
         const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
@@ -100,12 +104,12 @@ const generateToken = (id, role) => {
     );
 };
 
-// Api to add item
 export const addItem = async (req, res) => {
     try {
         const userId = req.userId;
         const { name, category, price, old, description } = req.body;
         const imageFile = req.file;
+
         if (!name || !category || !price || !old || !imageFile || !description) {
             return res.json({ success: false, message: "Missing details" });
         }
@@ -114,6 +118,39 @@ export const addItem = async (req, res) => {
             folder: "unibazar_items",
         });
 
+        const sightResponse = await axios.get(
+            "https://api.sightengine.com/1.0/check.json",
+            {
+                params: {
+                    url: cloudinaryResult.secure_url,
+                    models: "nudity-2.1,gore-2.0,weapon,recreational_drug,medical,alcohol,tobacco",
+                    api_user: process.env.SIGHTENGINE_API_USER,
+                    api_secret: process.env.SIGHTENGINE_API_SECRET,
+                },
+            }
+        );
+        const data = sightResponse.data;
+        const nudity = data.nudity || {};
+        const gore = data.gore || {};
+        const weapon = data.weapon || {};
+        const drug = data.recreational_drug || {};
+        const medical = data.medical || {};
+        const alcohol = data.alcohol || {};
+        const tobacco = data.tobacco || {};
+        const isNuditySafe = (nudity.none || 0) > 0.85 && (nudity.sexual_activity || 0) < 0.1 && (nudity.sexual_display || 0) < 0.1 && (nudity.erotica || 0) < 0.1;
+        const isGoreSafe = (gore.prob || 0) < 0.3;
+        const isWeaponSafe = (weapon.classes?.firearm || 0) < 0.3 && (weapon.classes?.knife || 0) < 0.3;
+        const isDrugSafe = (drug.prob || 0) < 0.3;
+        const isAlcoholSafe = (alcohol.prob || 0) < 0.3;
+        const isTobaccoSafe = (tobacco.prob || 0) < 0.3;
+        const isSafe = isNuditySafe && isGoreSafe && isWeaponSafe && isDrugSafe && isAlcoholSafe && isTobaccoSafe;
+        let reasons = [];
+        if (!isNuditySafe) reasons.push("Inappropriate content");
+        if (!isGoreSafe) reasons.push("Gore/Violence detected");
+        if (!isWeaponSafe) reasons.push("Weapon detected");
+        if (!isDrugSafe) reasons.push("Drugs detected");
+        if (!isAlcoholSafe) reasons.push("Alcohol detected");
+        if (!isTobaccoSafe) reasons.push("Tobacco detected");
         const itemData = {
             name,
             category,
@@ -122,12 +159,10 @@ export const addItem = async (req, res) => {
             image: cloudinaryResult.secure_url,
             date: new Date().toISOString(),
             owner: userId,
+            aiapproved: isSafe,
+            approved: isSafe,
             description
         };
-        console.log("req.file:", req.file);
-        console.log("req.body:", req.body);
-        console.log("userId:", req.userId);
-
         const newItem = new Item(itemData);
         await newItem.save();
         await User.findByIdAndUpdate(
@@ -135,13 +170,24 @@ export const addItem = async (req, res) => {
             { $push: { Listings: newItem._id } },
             { new: true }
         );
-        res.json({ success: true, message: "Item Added" });
+        if (!isSafe) {
+            return res.json({
+                success: true,
+                message: "Item added but pending approval",
+                aiapproved: false,
+                reasons
+            });
+        }
+        res.json({
+            success: true,
+            message: "Item Added and Approved",
+            aiapproved: true
+        });
     } catch (error) {
-        console.error('Error in addItem:', error);
+        console.error("Error in addItem:", error);
         res.json({ success: false, message: error.message });
     }
 };
-
 // api to load user data
 export const loadUserData = async (req, res) => {
     try {
@@ -175,7 +221,7 @@ export const loadProfileData = async (req, res) => {
     }
 };
 
-// Exporting the functions
+// exporting the functions
 export const handleItemClick = async (req, res) => {
     const itemId = req.params.itemId;
     const userId = req.userId;
@@ -219,7 +265,6 @@ export const updateProfile = async (req, res) => {
         const updateFields = { name, phone, address, dob, gender };
 
         if (imageFile) {
-            // Upload image to Cloudinary
             const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
                 resource_type: 'image',
             });
@@ -240,23 +285,19 @@ export const addInWishlist = async (req, res) => {
     try {
         const userId = req.userId;
         const { itemId } = req.body;
-
         const item = await Item.findById(itemId);
         if (!item) {
             return res.json({ success: false, message: "Item not found" });
         }
-
         if (item.owner.toString() === userId) {
             return res.json({ success: false, message: "You are the owner of the item" });
         }
-
         // Check if item already exists in wishlist
         const user = await User.findById(userId);
         const alreadyWishlisted = user.wishlist.some(w => w.itemId.toString() === itemId);
         if (alreadyWishlisted) {
             return res.json({ success: false, message: "Item already in wishlist" });
         }
-
         await User.findByIdAndUpdate(userId, {
             $push: {
                 wishlist: {

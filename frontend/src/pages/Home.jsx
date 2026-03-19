@@ -8,7 +8,6 @@ import { AppContext } from "../context/AppContext";
 
 const Home = () => {
     const { token, userData } = useContext(AppContext);
-    console.log("User Data:", userData);
     return (
         <div>
             <Hero />
