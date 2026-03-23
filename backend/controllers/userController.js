@@ -104,13 +104,8 @@ const generateToken = (id, role) => {
     );
 };
 
-
 export const addItem = async (req, res) => {
     try {
-        console.log("BODY:", req.body);
-        console.log("FILE:", req.file);
-        console.log("USER:", req.userId);
-
         const userId = req.userId;
         const { name, category, price, old, description } = req.body;
         const imageFile = req.file;
@@ -123,14 +118,45 @@ export const addItem = async (req, res) => {
         }
 
         const imageUrl = imageFile.path;
-        console.log("IMAGE URL:", imageUrl);
 
         let isSafe = true;
-        let reasons = [];
 
+        //Text check
         try {
-            await new Promise(resolve => setTimeout(resolve, 1200));
+            const form = new FormData();
+            form.append("text", `${name} ${description}`);
+            form.append("lang", "en");
+            form.append("models", "general,self-harm");
+            form.append("mode", "ml");
+            form.append("api_user", process.env.SIGHTENGINE_API_USER);
+            form.append("api_secret", process.env.SIGHTENGINE_API_SECRET);
 
+            const textRes = await axios.post(
+                "https://api.sightengine.com/1.0/text/check.json",
+                form,
+                { headers: form.getHeaders() }
+            );
+
+            const t = textRes.data.moderation_classes;
+
+            if (
+                t.sexual > 0.2 ||
+                t.insulting > 0.3 ||
+                t.toxic > 0.3 ||
+                t.discriminatory > 0.3 ||
+                t.violent > 0.3 ||
+                t.self_harm > 0.2
+            ) {
+                isSafe = false;
+            }
+
+        } catch (err) {
+            console.log("TEXT AI ERROR:", err.response?.data || err.message);
+            isSafe = false; // fail-safe strict
+        }
+
+        // Image check
+        try {
             const sightResponse = await axios.get(
                 "https://api.sightengine.com/1.0/check.json",
                 {
@@ -145,123 +171,20 @@ export const addItem = async (req, res) => {
 
             const data = sightResponse.data;
 
-            if ((data.nudity?.none || 0) < 0.9) {
+            if (
+                (data.nudity?.none || 0) < 0.9 ||
+                (data.gore?.prob || 0) > 0.2 ||
+                (data.weapon?.classes?.firearm || 0) > 0.2 ||
+                (data.recreational_drug?.prob || 0) > 0.2 ||
+                (data.alcohol?.prob || 0) > 0.2 ||
+                (data.tobacco?.prob || 0) > 0.2
+            ) {
                 isSafe = false;
-                reasons.push("Inappropriate image");
-            }
-            if ((data.gore?.prob || 0) >= 0.2) {
-                isSafe = false;
-                reasons.push("Gore detected");
-            }
-            if ((data.weapon?.classes?.firearm || 0) >= 0.2) {
-                isSafe = false;
-                reasons.push("Weapon detected");
-            }
-            if ((data.recreational_drug?.prob || 0) >= 0.2) {
-                isSafe = false;
-                reasons.push("Drugs detected");
-            }
-            if ((data.alcohol?.prob || 0) >= 0.2) {
-                isSafe = false;
-                reasons.push("Alcohol detected");
-            }
-            if ((data.tobacco?.prob || 0) >= 0.2) {
-                isSafe = false;
-                reasons.push("Tobacco detected");
             }
 
         } catch (err) {
             console.log("IMAGE AI ERROR:", err.response?.data || err.message);
-        }
-
-        const fullText = `${name} ${description}`;
-
-        try {
-            const mlData = new FormData();
-            mlData.append("text", fullText);
-            mlData.append("lang", "en");
-            mlData.append("models", "general,self-harm");
-            mlData.append("mode", "ml");
-            mlData.append("api_user", process.env.SIGHTENGINE_API_USER);
-            mlData.append("api_secret", process.env.SIGHTENGINE_API_SECRET);
-
-            const mlRes = await axios.post(
-                "https://api.sightengine.com/1.0/text/check.json",
-                mlData,
-                { headers: mlData.getHeaders() }
-            );
-
-            const ml = mlRes.data.moderation_classes;
-
-            if (
-                ml.sexual >= 0.05 ||
-                ml.insulting >= 0.08 ||
-                ml.violent >= 0.05 ||
-                ml.toxic >= 0.08 ||
-                ml.self_harm >= 0.03
-            ) {
-                isSafe = false;
-                reasons.push("Unsafe text (AI strict)");
-            }
-
-            const riskScore =
-                (ml.sexual || 0) +
-                (ml.insulting || 0) +
-                (ml.violent || 0) +
-                (ml.toxic || 0) +
-                (ml.self_harm || 0);
-
-            if (riskScore > 0.2) {
-                isSafe = false;
-                reasons.push("High cumulative risk");
-            }
-
-            const ruleData = new FormData();
-            ruleData.append("text", fullText);
-            ruleData.append("lang", "en");
-            ruleData.append(
-                "categories",
-                "profanity,drug,weapon,spam,violence,self-harm,extremism,money-transaction"
-            );
-            ruleData.append("mode", "rules");
-            ruleData.append("api_user", process.env.SIGHTENGINE_API_USER);
-            ruleData.append("api_secret", process.env.SIGHTENGINE_API_SECRET);
-
-            const ruleRes = await axios.post(
-                "https://api.sightengine.com/1.0/text/check.json",
-                ruleData,
-                { headers: ruleData.getHeaders() }
-            );
-
-            const rule = ruleRes.data;
-
-            const hasAnyMatch = (obj) =>
-                obj && obj.matches && obj.matches.length > 0;
-
-            if (
-                hasAnyMatch(rule.profanity) ||
-                hasAnyMatch(rule.drug) ||
-                hasAnyMatch(rule.weapon) ||
-                hasAnyMatch(rule.spam) ||
-                hasAnyMatch(rule.money_transaction) ||
-                hasAnyMatch(rule.violence) ||
-                hasAnyMatch(rule.self_harm) ||
-                hasAnyMatch(rule.extremism)
-            ) {
-                isSafe = false;
-                reasons.push("Unsafe text (AI rules strict)");
-            }
-
-        } catch (err) {
-            console.log("TEXT AI ERROR:", err.response?.data || err.message);
-        }
-
-        if (!isSafe) {
-            return res.status(400).json({
-                success: false,
-                message: "Item rejected due to unsafe content",
-                reasons
-            });
+            isSafe = false; // fail-safe strict
         }
 
         const newItem = new Item({
@@ -273,8 +196,8 @@ export const addItem = async (req, res) => {
             image: imageUrl,
             date: new Date().toISOString(),
             owner: userId,
-            aiapproved: true,
-            approved: true
+            aiapproved: isSafe,
+            approved: isSafe
         });
 
         await newItem.save();
@@ -285,8 +208,10 @@ export const addItem = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "Item approved and visible",
-            aiapproved: true
+            message: isSafe
+                ? "Item Added and Approved"
+                : "Item added but pending approval",
+            aiapproved: isSafe
         });
 
     } catch (error) {
