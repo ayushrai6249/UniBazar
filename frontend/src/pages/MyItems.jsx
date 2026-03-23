@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { Trash2 } from "lucide-react";
 
 const MyItems = () => {
     const [yourItems, setYourItems] = useState([]);
@@ -19,6 +20,26 @@ const MyItems = () => {
             toast.error(error.message);
         }
     }
+
+    const deleteItem = async (itemId) => {
+        try {
+            const { data } = await axios.post(
+                backendUrl + "/api/items/delete-item",
+                { itemId },
+                { headers: { token } }
+            );
+
+            if (data.success) {
+                toast.success(data.message);
+                loadYourItems();
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    }
+
     useEffect(() => {
         if (token) {
             loadYourItems();
@@ -36,8 +57,19 @@ const MyItems = () => {
                     {yourItems.map((item, index) => (
                         <div
                             key={index}
-                            className='bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300 cursor-pointer group'
+                            className='relative bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300 cursor-pointer group'
                         >
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!window.confirm("Delete this item?")) return;
+                                    deleteItem(item._id);
+                                }}
+                                className="absolute top-2 right-2 z-10 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+
                             <div
                                 onClick={() => { navigate(`/item/${item._id}`); scrollTo(0, 0); }}
                                 className='w-full h-48 bg-gray-100 rounded-t-2xl overflow-hidden'

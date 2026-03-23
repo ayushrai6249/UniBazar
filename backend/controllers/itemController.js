@@ -1,3 +1,4 @@
+import { success } from 'zod';
 import Item from '../models/itemModel.js';
 import User from '../models/userModel.js';
 import jwt from "jsonwebtoken";
@@ -36,6 +37,24 @@ const getItemInfo = async (req, res) => {
         }
 
         return res.json({ success: false, message: "Item Unavailable" });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// DELETE USER ITEM
+const deleteUserItem = async (req, res) => {
+    try {
+        const { itemId } = req.body;
+        if (!itemId) {
+            return res.json({ success: false, message: "Item ID required" });
+        }
+        const item = await Item.findById(itemId);
+        if (!item) {
+            return res.json({ success: false, message: "Item not found" });
+        }
+        await Item.findByIdAndDelete(itemId);
+        res.json({ success: true, message: "Item deleted successfully" });
     } catch (error) {
         res.json({ success: false, message: error.message });
     }
@@ -108,4 +127,5 @@ export {
     toggleItemUnavailable,
     loadRecentItems,
     getItemInfo,
+    deleteUserItem,
 };

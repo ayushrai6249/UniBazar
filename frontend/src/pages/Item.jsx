@@ -3,7 +3,7 @@ import { AppContext } from '../context/AppContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Heart, Trash2 } from 'lucide-react';
 
 const Badge = ({ text, color }) => (
   <span
@@ -48,6 +48,27 @@ const Item = () => {
 
       if (data.success) {
         setItemInfo(data.itemInfo);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const deleteItem = async () => {
+    try {
+      if (!window.confirm("Delete this item?")) return;
+
+      const { data } = await axios.post(
+        `${backendUrl}/api/items/delete-item`,
+        { itemId: itemInfo._id },
+        { headers: { token } }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+        navigate('/'); // redirect after delete
       } else {
         toast.error(data.message);
       }
@@ -105,6 +126,7 @@ const Item = () => {
           relative
         "
       >
+        {/* Wishlist Button */}
         {token && !isOwner && (
           <button
             onClick={toggleWishlist}
@@ -119,18 +141,30 @@ const Item = () => {
           </button>
         )}
 
+        {/* Delete Button (OWNER ONLY) */}
+        {isOwner && (
+          <button
+            onClick={deleteItem}
+            className="absolute top-4 right-4 z-20 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition"
+          >
+            <Trash2 size={20} />
+          </button>
+        )}
+
+        {/* Image */}
         <div className="flex justify-center">
           <img
             src={itemInfo.image}
             alt={itemInfo.name}
             className={`
-            w-full object-cover aspect-square
-            rounded-md sm:rounded-xl
-          ${!itemInfo.available ? 'grayscale' : ''}
-          `}
+              w-full object-cover aspect-square
+              rounded-md sm:rounded-xl
+              ${!itemInfo.available ? 'grayscale' : ''}
+            `}
           />
         </div>
 
+        {/* Info */}
         <div className="flex flex-col gap-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-3">

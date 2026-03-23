@@ -27,7 +27,6 @@ const Items = () => {
         if (location.state?.category) {
             setCategory(location.state.category);
 
-            // ✅ clear navigation state after consuming it
             navigate('/items', { replace: true });
         }
     }, [location.state, navigate]);
