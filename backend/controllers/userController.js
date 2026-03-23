@@ -6,6 +6,7 @@ import cloudinary from "../config/cloudinary.js";
 import { z } from 'zod';
 import { RegisterSchema } from '../middleware/validateSchema.js';
 import dotenv from 'dotenv';
+import FormData from "form-data";
 dotenv.config();
 import axios from "axios";
 // Api to register user
@@ -104,6 +105,7 @@ const generateToken = (id, role) => {
     );
 };
 
+
 export const addItem = async (req, res) => {
     try {
         const userId = req.userId;
@@ -118,10 +120,9 @@ export const addItem = async (req, res) => {
         }
 
         const imageUrl = imageFile.path;
-
         let isSafe = true;
 
-        //Text check
+        //  TEXT MODERATION 
         try {
             const form = new FormData();
             form.append("text", `${name} ${description}`);
@@ -137,56 +138,59 @@ export const addItem = async (req, res) => {
                 { headers: form.getHeaders() }
             );
 
-            const t = textRes.data.moderation_classes;
+            const t = textRes.data.moderation_classes || {};
 
             if (
-                t.sexual > 0.2 ||
-                t.insulting > 0.3 ||
-                t.toxic > 0.3 ||
-                t.discriminatory > 0.3 ||
-                t.violent > 0.3 ||
-                t.self_harm > 0.2
+                (t.sexual || 0) > 0.4 ||
+                (t.insulting || 0) > 0.5 ||
+                (t.toxic || 0) > 0.5 ||
+                (t.discriminatory || 0) > 0.5 ||
+                (t.violent || 0) > 0.5 ||
+                (t.self_harm || 0) > 0.4
             ) {
                 isSafe = false;
             }
 
         } catch (err) {
             console.log("TEXT AI ERROR:", err.response?.data || err.message);
-            isSafe = false; // fail-safe strict
         }
 
-        // Image check
+        console.log("After Text Check:", isSafe);
+
+        //  IMAGE MODERATION 
         try {
             const sightResponse = await axios.get(
                 "https://api.sightengine.com/1.0/check.json",
                 {
                     params: {
                         url: imageUrl,
-                        models: "nudity-2.1,gore-2.0,weapon,recreational_drug,medical,alcohol,tobacco",
+                        models: "nudity-2.1,gore-2.0,weapon,recreational_drug,alcohol,tobacco",
                         api_user: process.env.SIGHTENGINE_API_USER,
                         api_secret: process.env.SIGHTENGINE_API_SECRET,
                     },
                 }
             );
 
-            const data = sightResponse.data;
+            const data = sightResponse.data || {};
 
             if (
-                (data.nudity?.none || 0) < 0.9 ||
-                (data.gore?.prob || 0) > 0.2 ||
-                (data.weapon?.classes?.firearm || 0) > 0.2 ||
-                (data.recreational_drug?.prob || 0) > 0.2 ||
-                (data.alcohol?.prob || 0) > 0.2 ||
-                (data.tobacco?.prob || 0) > 0.2
+                (data.nudity?.raw || 0) > 0.6 ||
+                (data.gore?.prob || 0) > 0.4 ||
+                (data.weapon?.classes?.firearm || 0) > 0.4 ||
+                (data.recreational_drug?.prob || 0) > 0.4 ||
+                (data.alcohol?.prob || 0) > 0.5 ||
+                (data.tobacco?.prob || 0) > 0.5
             ) {
                 isSafe = false;
             }
 
         } catch (err) {
             console.log("IMAGE AI ERROR:", err.response?.data || err.message);
-            isSafe = false; // fail-safe strict
         }
 
+        console.log("Final isSafe:", isSafe);
+
+        //  SAVE ITEM 
         const newItem = new Item({
             name,
             category,
