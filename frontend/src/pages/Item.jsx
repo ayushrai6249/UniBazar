@@ -141,11 +141,10 @@ const Item = () => {
           </button>
         )}
 
-        {/* Delete Button (OWNER ONLY) */}
         {isOwner && (
           <button
             onClick={deleteItem}
-            className="absolute top-4 right-4 z-20 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition"
+            className="absolute top-4 right-4 z-10 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition"
           >
             <Trash2 size={20} />
           </button>
