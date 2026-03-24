@@ -23,6 +23,7 @@ import chess from './chess.webp'
 import badminton from './badminton.webp'
 import umbrella from './umbrella.webp'
 import about_image from './about_image.jpg'
+import UniLogo from './UniLogo.png'
 
 export const assets = {
   cross_icon,
@@ -31,7 +32,8 @@ export const assets = {
   profile_pic,
   hero,
   arrow_icon,
-  about_image
+  about_image,
+  UniLogo
 }
 
 export const categoryData = [

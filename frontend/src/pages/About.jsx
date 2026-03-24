@@ -15,8 +15,9 @@ const About = () => {
 
             <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
                 <img
-                    className="w-full max-w-[500px] rounded-2xl shadow-md"
-                    src={assets.about_image}
+                    className="w-full max-w-[500px] "
+                    // src={assets.about_image}
+                    src={assets.UniLogo}
                     alt="About UniBazar"
                 />
                 <div className="flex flex-col gap-6 text-gray-700 text-sm sm:text-base leading-relaxed">
