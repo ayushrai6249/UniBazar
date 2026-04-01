@@ -34,9 +34,9 @@ const Items = () => {
     const applyFilter = () => {
         let items = [...approvedItems];
 
-        if (userData?._id) {
-            items = items.filter(item => item.owner?._id !== userData._id);
-        }
+        // if (userData?._id) {
+        //     items = items.filter(item => item.owner?._id !== userData._id);
+        // }
 
         if (category) {
             items = items.filter(item => item.category === category);
@@ -82,6 +82,16 @@ const Items = () => {
 
     return (
         <div>
+            <p className="text-xs text-gray-500 mb-6">
+                *Viewing items from your college. To change college, update it from{' '}
+                <span
+                    onClick={() => navigate('/profile')}
+                    className="text-blue-600 cursor-pointer underline"
+                >
+                    profile
+                </span>{' '}
+                section.
+            </p>
             <p className="text-gray-600">
                 {category ? `Category: ${category}` : 'Browse all products'}
             </p>

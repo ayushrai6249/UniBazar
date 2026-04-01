@@ -27,11 +27,15 @@ const AppContextProvider = (props) => {
 
     const loadApprovedItems = async () => {
         try {
-            const { data } = await axios.get(`${backendUrl}/api/items/approved-items`);
+            const { data } = await axios.get(
+                `${backendUrl}/api/items/approved-items`,
+                token ? { headers: { token } } : {}
+            );
+
             if (data.success) {
-                // This function loads the "most viewed" or default items
                 setApprovedItems(data.recentItems);
             }
+
         } catch (error) {
             toast.error(error.message);
         }

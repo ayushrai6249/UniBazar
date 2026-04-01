@@ -85,14 +85,17 @@ const loadYourItems = async (req, res) => {
 //    LOAD RECENT APPROVED ITEMS
 const loadRecentItems = async (req, res) => {
     try {
-        const recentItems = await Item.find({ approved: true })
-            .populate("owner", "name avatar")
-            .sort({ views: -1 });
+        let filter = { approved: true };
+        if (req.userId) {
+            const user = await User.findById(req.userId);
 
-        if (!recentItems.length) {
-            return res.json({ success: false, message: "Cannot load Items" });
+            if (user?.collegeId) {
+                filter.collegeId = user.collegeId;
+            }
         }
-
+        const recentItems = await Item.find(filter)
+            .populate("owner", "name image")//avatar
+            .sort({ views: -1 });
         res.json({ success: true, recentItems });
     } catch (error) {
         res.json({ success: false, message: error.message });

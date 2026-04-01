@@ -68,7 +68,17 @@ const AddListing = () => {
         Add New Listing
       </h2>
 
-      <hr className="bg-zinc-400 h-[1px] border-none mb-6" />
+      <hr className="bg-zinc-400 h-[1px] border-none mb-1" />
+      <p className="text-xs text-gray-500 mb-6">
+        *This item will be added in your current college. To change college, update it from{' '}
+        <span
+          onClick={() => navigate('/profile')}
+          className="text-blue-600 cursor-pointer underline"
+        >
+          profile
+        </span>{' '}
+        section.
+      </p>
 
       {/* IMAGE */}
       <label htmlFor="image" className="cursor-pointer">
@@ -175,6 +185,7 @@ const AddListing = () => {
           >
             {loading ? 'Adding...' : 'Add Listing'}
           </button>
+
         </div>
       </form>
     </div>

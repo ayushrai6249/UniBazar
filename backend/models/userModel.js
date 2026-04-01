@@ -40,7 +40,15 @@ const userSchema = new mongoose.Schema({
         addedAt: {
             type: Date, default: Date.now
         }
-    }]
+    }],
+    collegeId: {
+        type: String,
+        required: true,
+        index: true
+    },
+    collegeName: {
+        type: String
+    },
 });
 
 const User = mongoose.models.user || mongoose.model("User", userSchema);

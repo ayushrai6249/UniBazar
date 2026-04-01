@@ -7,6 +7,7 @@ import userRoutes from './routes/userRouter.js';
 import itemRouter from './routes/itemRouter.js';
 import adminRouter from './routes/adminRouter.js';
 import msgRouter from './routes/messageRouter.js';
+import collegeRouter from './routes/collegeRouter.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -22,6 +23,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/items', itemRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/message', msgRouter);
+app.use('/api/colleges', collegeRouter);
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);

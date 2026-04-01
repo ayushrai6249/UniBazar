@@ -53,6 +53,18 @@ export const isManagerOrAdmin = async (req, res, next) => {
   }
 };
 
+export const optionalAuthMiddleware = async (req, res, next) => {
+  try {
+    const token = req.headers.token;
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.userId = decoded.id;
+    }
+    next();
+  } catch (error) {
+    next();
+  }
+};
 
 //  Check item ownership
 export const isOwner = async (req, res, next) => {

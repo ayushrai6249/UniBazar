@@ -21,11 +21,12 @@ const itemSchema = new mongoose.Schema({
         ref: "User"
     },
     description: { type: String, required: true },
-    message: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Message",
-
-    }]
+    collegeId: {
+        type: String,
+        required: true,
+        index: true
+    },
+    collegeName: String,
 });
 
 const Item = mongoose.model("Item", itemSchema);

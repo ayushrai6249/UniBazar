@@ -9,32 +9,44 @@ import dotenv from 'dotenv';
 import FormData from "form-data";
 dotenv.config();
 import axios from "axios";
+import College from "../models/collegeModel.js";
+
 // Api to register user
 export const registerUser = async (req, res) => {
     try {
-
         const validatedData = RegisterSchema.parse(req.body);
-        const { name, email, password, phone } = validatedData;
-
-
+        const { name, email, password, phone, collegeId } = validatedData;
+        const college = await College.findOne(collegeId);
+        console.log(req.body);
+        if (!college) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid college selected"
+            });
+        }
         const userExists = await User.findOne({ email });
         if (userExists) {
-            return res.status(409).json({ success: false, message: 'User already exists with this email' });
+            return res.status(409).json({
+                success: false,
+                message: 'User already exists with this email'
+            });
         }
-
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-
-
         const newUser = new User({
             name,
             email,
             password: hashedPassword,
             phone,
+            collegeId: college.id,
+            collegeName: college.name
         });
-
         const savedUser = await newUser.save();
-        const tokenPayload = { id: savedUser._id, role: savedUser.role };
+        const tokenPayload = {
+            id: savedUser._id,
+            role: savedUser.role,
+            collegeId: savedUser.collegeId
+        };
         const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
             expiresIn: '1d',
         });
@@ -43,14 +55,18 @@ export const registerUser = async (req, res) => {
             message: "Registered successfully",
             token,
         });
-
     } catch (error) {
         if (error instanceof z.ZodError) {
-            return res.status(400).json({ success: false, errors: error.flatten().fieldErrors });
+            return res.status(400).json({
+                success: false,
+                errors: error.flatten().fieldErrors
+            });
         }
-
         console.error("REGISTRATION_ERROR:", error);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
     }
 };
 export const loginUser = async (req, res) => {
@@ -98,10 +114,7 @@ const generateToken = (id, role) => {
             id,
             role
         },
-        process.env.JWT_SECRET,
-        {
-            expiresIn: '7d',
-        }
+        process.env.JWT_SECRET
     );
 };
 
@@ -109,6 +122,13 @@ const generateToken = (id, role) => {
 export const addItem = async (req, res) => {
     try {
         const userId = req.userId;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
         const { name, category, price, old, description } = req.body;
         const imageFile = req.file;
 
@@ -200,6 +220,8 @@ export const addItem = async (req, res) => {
             image: imageUrl,
             date: new Date().toISOString(),
             owner: userId,
+            collegeId: user.collegeId,
+            collegeName: user.collegeName,
             aiapproved: isSafe,
             approved: isSafe
         });
@@ -293,15 +315,25 @@ export const handleItemClick = async (req, res) => {
 export const updateProfile = async (req, res) => {
     try {
         const userId = req.userId;
-        const { name, phone, address, dob, gender } = req.body;
+        const { name, phone, address, dob, gender, collegeId } = req.body;
         const imageFile = req.file;
 
-        if (!name || !phone || !dob || !gender) {
+
+
+        if (!name || !phone || !dob || !gender || !collegeId) {
             return res.json({ success: false, message: "Missing details" });
         }
 
         const updateFields = { name, phone, address, dob, gender };
-
+        const college = await College.findOne({ id: collegeId });
+        if (!college) {
+            return res.json({
+                success: false,
+                message: "Invalid college"
+            });
+        }
+        updateFields.collegeId = college.id;
+        updateFields.collegeName = college.name;
         if (imageFile) {
             const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
                 resource_type: 'image',

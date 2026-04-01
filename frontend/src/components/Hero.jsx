@@ -17,7 +17,7 @@ const Hero = () => {
                     and buy or sell your items hassle-free.
                 </p>
                 <a
-                    href="#catagory"
+                    href="/items"
                     className="flex items-center gap-2 bg-white px-4 py-3 rounded-full text-gray-600 text-sm m-auto md:m-0 hover:scale-105 transition-all duration-300"
                     style={{ maxWidth: '180px' }}
                 >

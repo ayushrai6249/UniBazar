@@ -54,10 +54,11 @@ const ShowItems = () => {
     };
 
     const sortedItems = [...(approvedItems || [])]
-        .filter(item => item.owner._id !== userData?._id && item.available)
+        .filter(item => item.available)
+        // .filter(item => item.owner._id !== userData?._id && item.available)
         .sort((a, b) => {
             if (viewMode === 'recent') {
-                return new Date(b.date) - new Date(a.date); // ✅ using `date`
+                return new Date(b.date) - new Date(a.date);
             }
             return (b.views || 0) - (a.views || 0);
         })

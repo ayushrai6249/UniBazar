@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -25,10 +25,47 @@ const Register = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    const [collegeSearch, setCollegeSearch] = useState('');
+    const [collegeResults, setCollegeResults] = useState([]);
+    const [selectedCollege, setSelectedCollege] = useState(null);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
         setErrors(prev => ({ ...prev, [name]: null }));
+    };
+
+    const searchCollege = async (value) => {
+        try {
+            if (!value) {
+                setCollegeResults([]);
+                return;
+            }
+
+            const { data } = await axios.get(
+                `${backendUrl}/api/colleges?search=${value}`
+            );
+
+            setCollegeResults(data);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (collegeSearch) {
+                searchCollege(collegeSearch);
+            }
+        }, 300);
+
+        return () => clearTimeout(delay);
+    }, [collegeSearch]);
+
+    const handleCollegeChange = (e) => {
+        const value = e.target.value;
+        setCollegeSearch(value);
+        setSelectedCollege(null);
     };
 
     const handleSubmit = async (e) => {
@@ -41,12 +78,22 @@ const Register = () => {
             return;
         }
 
+        if (!selectedCollege) {
+            toast.error("Please select your college");
+            return;
+        }
+
         try {
             setLoading(true);
             setErrors({});
 
-            const payload = { name, email, password };
-            if (phone) payload.phone = phone;
+            const payload = {
+                name,
+                email,
+                password,
+                phone,
+                collegeId: selectedCollege._id
+            };
 
             const { data } = await axios.post(
                 `${backendUrl}/api/users/register`,
@@ -77,27 +124,9 @@ const Register = () => {
     };
 
     return (
-        <div
-            className="
-                min-h-screen
-                bg-white md:bg-gray-100
-                flex
-                items-start md:items-center
-                justify-center
-                pt-6 md:pt-0
-            "
-        >
-            <div
-                className="
-                    w-full
-                    px-4 py-6
-                    md:px-8 md:py-8
-                    md:max-w-md
-                    bg-white
-                    md:rounded-xl
-                    md:shadow-lg
-                "
-            >
+        <div className="min-h-screen bg-white md:bg-gray-100 flex items-start md:items-center justify-center pt-6 md:pt-0">
+            <div className="w-full px-4 py-6 md:px-8 md:py-8 md:max-w-md bg-white md:rounded-xl md:shadow-lg">
+
                 <h1 className="text-2xl font-semibold text-gray-900">
                     Create Account
                 </h1>
@@ -117,23 +146,9 @@ const Register = () => {
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
-                                placeholder="Enter your name"
-                                className={`
-                                    w-full
-                                    pl-10 pr-4 py-2.5 md:py-3
-                                    rounded-md
-                                    bg-gray-100
-                                    outline-none
-                                    border
-                                    ${errors.name
-                                        ? 'border-red-500'
-                                        : 'border-transparent focus:border-blue-600'}
-                                `}
+                                className="w-full pl-10 pr-4 py-2.5 rounded-md bg-gray-100 outline-none border focus:border-blue-600"
                             />
                         </div>
-                        {errors.name && (
-                            <p className="text-sm text-red-600 mt-1">{errors.name[0]}</p>
-                        )}
                     </div>
 
                     {/* Email */}
@@ -146,23 +161,9 @@ const Register = () => {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                placeholder="Enter email"
-                                className={`
-                                    w-full
-                                    pl-10 pr-4 py-2.5 md:py-3
-                                    rounded-md
-                                    bg-gray-100
-                                    outline-none
-                                    border
-                                    ${errors.email
-                                        ? 'border-red-500'
-                                        : 'border-transparent focus:border-blue-600'}
-                                `}
+                                className="w-full pl-10 pr-4 py-2.5 rounded-md bg-gray-100 outline-none border focus:border-blue-600"
                             />
                         </div>
-                        {errors.email && (
-                            <p className="text-sm text-red-600 mt-1">{errors.email[0]}</p>
-                        )}
                     </div>
 
                     {/* Phone */}
@@ -175,122 +176,76 @@ const Register = () => {
                                 name="phone"
                                 value={formData.phone}
                                 onChange={handleChange}
-                                placeholder="Phone number"
-                                className={`
-                                    w-full
-                                    pl-10 pr-4 py-2.5 md:py-3
-                                    rounded-md
-                                    bg-gray-100
-                                    outline-none
-                                    border
-                                    ${errors.phone
-                                        ? 'border-red-500'
-                                        : 'border-transparent focus:border-blue-600'}
-                                `}
+                                className="w-full pl-10 pr-4 py-2.5 rounded-md bg-gray-100 outline-none border focus:border-blue-600"
                             />
                         </div>
-                        {errors.phone && (
-                            <p className="text-sm text-red-600 mt-1">{errors.phone[0]}</p>
-                        )}
+                    </div>
+
+                    <div>
+                        <label className="text-sm font-medium text-gray-700">College</label>
+
+                        <div className="relative mt-2">
+                            <input
+                                type="text"
+                                value={collegeSearch}
+                                onChange={handleCollegeChange}
+                                placeholder="Search your college..."
+                                className="w-full px-4 py-2.5 rounded-md bg-gray-100 outline-none border focus:border-blue-600"
+                            />
+
+                            {collegeResults.length > 0 && (
+                                <div className="absolute z-10 w-full bg-white border mt-1 rounded-md shadow max-h-60 overflow-y-auto">
+                                    {collegeResults.map((college) => (
+                                        <div
+                                            key={college.id}
+                                            onClick={() => {
+                                                setSelectedCollege(college);
+                                                setCollegeSearch(`${college.shortform} — ${college.city}`);
+                                                setCollegeResults([]);
+                                            }}
+                                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                        >
+                                            <p className="font-medium">{college.shortform}</p>
+                                            <p className="text-sm text-gray-500">
+                                                {college.name} — {college.city}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Password */}
                     <div>
-                        <label className="text-sm font-medium text-gray-700">Password</label>
-                        <div className="relative mt-2">
-                            <RiLockPasswordLine className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                placeholder="Enter password"
-                                className={`
-                                    w-full
-                                    pl-10 pr-10 py-2.5 md:py-3
-                                    rounded-md
-                                    bg-gray-100
-                                    outline-none
-                                    border
-                                    ${errors.password
-                                        ? 'border-red-500'
-                                        : 'border-transparent focus:border-blue-600'}
-                                `}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(p => !p)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                            >
-                                {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
-                            </button>
-                        </div>
-
-                        {errors.password && (
-                            <ul className="text-sm text-red-600 mt-1 space-y-1">
-                                {errors.password.map((err, i) => (
-                                    <li key={i}>• {err}</li>
-                                ))}
-                            </ul>
-                        )}
+                        <label>Password</label>
+                        <input
+                            type={showPassword ? 'text' : 'password'}
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 rounded-md bg-gray-100"
+                        />
                     </div>
 
                     {/* Confirm Password */}
                     <div>
-                        <label className="text-sm font-medium text-gray-700">
-                            Confirm Password
-                        </label>
-                        <div className="relative mt-2">
-                            <RiLockPasswordLine className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type={showConfirmPassword ? 'text' : 'password'}
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                placeholder="Confirm password"
-                                className={`
-                                    w-full
-                                    pl-10 pr-10 py-2.5 md:py-3
-                                    rounded-md
-                                    bg-gray-100
-                                    outline-none
-                                    border
-                                    ${errors.confirmPassword
-                                        ? 'border-red-500'
-                                        : 'border-transparent focus:border-blue-600'}
-                                `}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowConfirmPassword(p => !p)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                            >
-                                {showConfirmPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
-                            </button>
-                        </div>
-                        {errors.confirmPassword && (
-                            <p className="text-sm text-red-600 mt-1">
-                                {errors.confirmPassword[0]}
-                            </p>
-                        )}
+                        <label>Confirm Password</label>
+                        <input
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            name="confirmPassword"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 rounded-md bg-gray-100"
+                        />
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="
-                            w-full
-                            bg-blue-600
-                            text-white
-                            py-3
-                            rounded-md
-                            font-semibold
-                            hover:bg-blue-700
-                            transition
-                            disabled:opacity-60
-                        "
+                        className="w-full bg-blue-600 text-white py-3 rounded-md"
                     >
-                        {loading ? 'Creating account...' : 'Create Account'}
+                        {loading ? 'Creating...' : 'Create Account'}
                     </button>
                 </form>
 
